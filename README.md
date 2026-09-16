@@ -1,2 +1,3 @@
 # Portfolio-2
 
+This is the second portfolio I've made, which will be used to apply for Development positions. It contains a few scripts I'm pretty proud of, most prominently the "IsAuthorized" script and all of what it does. I tried to include as much as I can reasonably share, as these all come from a personal project. I also tried to include different varieties of scripts in an effort to show understanding of Roblox's mechanics.
