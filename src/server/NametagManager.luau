@@ -91,9 +91,7 @@ local function getContainerPermissions(container)
 	return data
 end
 
--- Division Permissions live as a `.Permissions` field inside the division's
--- own data module under ReplicatedStorage.Information.Divisions, not as a
--- separate child script.
+-- fetch div perms 
 local function getDivisionPermissions(teamName, divisionKey)
 	local teamFolder = DivisionsFolder:FindFirstChild(teamName)
 	local divModule = teamFolder and teamFolder:FindFirstChild(divisionKey)
@@ -105,10 +103,10 @@ local function getDivisionPermissions(teamName, divisionKey)
 		warn("NametagManager: failed to require division module " .. divModule:GetFullName())
 		return false
 	end
-	return data.Permissions -- nil if the division itself has no Permissions field = open to everyone
+	return data.Permissions -- nil if the division itself has no Permissions field
 end
 
--- permissionsData: nil = open to everyone, false = fail closed, otherwise checked via IsAuthorized.
+-- permissions stuff. nil is open to everyone, otherwise it runs thru isauth
 local function isAuthorizedFor(player, permissionsData)
 	if permissionsData == false then
 		return false
@@ -119,8 +117,7 @@ local function isAuthorizedFor(player, permissionsData)
 	return IsAuthorized(player, permissionsData) == true
 end
 
--- Real rank if the player actually has one; otherwise "Developer" if they got
--- in via developer access, otherwise blank.
+-- rank handling. devs get "Developer" tag if they have perms thru dev perks, otherwise it defaults to the group rank
 local function resolveRoleText(player, rank, groupId)
 	if rank > 0 then
 		return safeRole(player, groupId)
@@ -154,7 +151,7 @@ TeamConfig["Community Safety Office"] = { Group = "CSO" }
 
 TeamConfig["Foundation Personnel"] = {
 	Group = "SCPF",
-	defaultPrefix = "", -- no prefix
+	defaultPrefix = "",
 	divisions = {
 		["Site Valora"] = { Group = "SV", prefix = "SV", color = "#ab1a39", rankColor = "#E9C1C7" },
 	},
@@ -194,7 +191,7 @@ TeamConfig["Global Occult Coalition"] = {
 	},
 }
 
--- 1st Battalion's prefix is banded by rank rather than being a single fixed prefix.
+-- function to handle 1BN by group ranks
 local function resolve1stBattalion(player)
 	local rank = safeRank(player, Groups["1BN"])
 	local prefix, prefixColor, rankColor
@@ -229,14 +226,10 @@ TeamConfig["Mobile Task Forces"] = {
 	},
 }
 
---  Core label logic 
+--  
 
--- Sets textLabel to the correct prefix + rank for `player`. Authorization for
--- both a division and the team-wide default is checked via IsAuthorized
--- against the exact same Permissions data TeamChanger/DivisionManager use --
--- NOT raw Roblox group rank. Rank/role TEXT still prefers the player's real
--- group rank when they have one; it only falls back to "Developer"/blank
--- when they were authorized without an actual rank in that group.
+-- rank handling, handles devs and all that fun stuff
+
 local function applyTeamLabel(player, textLabel, teamColor, team)
 	local teamName = team.Name
 	local config = TeamConfig[teamName]
@@ -266,9 +259,9 @@ local function applyTeamLabel(player, textLabel, teamColor, team)
 				end
 				return
 			end
-			-- not authorized for this division (or it doesn't exist) -- falls through to team default
+			-- sets label to team default if div stuff is invalid/they arent authed
 		end
-		-- selected division doesn't belong to this team (e.g. stale pick) -- falls through too
+		-- sets label to base team if selected division doesnt belong to the team
 	end
 
 	-- Default: team-wide Permissions + prefix.
